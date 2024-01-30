@@ -40,10 +40,10 @@ class DetectionVisualizerNode(Node):
             reliability=QoSReliabilityPolicy.RELIABLE,
             depth=1)
 
-        self._image_pub = self.create_publisher(Image, '~/dbg_images', output_image_qos)
+        self._image_pub = self.create_publisher(Image, '/dbg_images', output_image_qos)
 
-        self._image_sub = message_filters.Subscriber(self, Image, '~/images')
-        self._detections_sub = message_filters.Subscriber(self, Detection2DArray, '~/detections')
+        self._image_sub = message_filters.Subscriber(self, Image, '/image_color')
+        self._detections_sub = message_filters.Subscriber(self, Detection2DArray, '/detections')
 
         self._synchronizer = message_filters.ApproximateTimeSynchronizer(
             (self._image_sub, self._detections_sub), 5, 0.01)
