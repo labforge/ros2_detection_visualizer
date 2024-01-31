@@ -40,10 +40,10 @@ class DetectionVisualizerNode(Node):
             reliability=QoSReliabilityPolicy.RELIABLE,
             depth=1)
 
-        self._image_pub = self.create_publisher(Image, '~/dbg_images', output_image_qos)
+        self._image_pub = self.create_publisher(Image, '/dbg_images', output_image_qos)
 
-        self._image_sub = message_filters.Subscriber(self, Image, '~/images')
-        self._detections_sub = message_filters.Subscriber(self, Detection2DArray, '~/detections')
+        self._image_sub = message_filters.Subscriber(self, Image, '/image_color')
+        self._detections_sub = message_filters.Subscriber(self, Detection2DArray, '/detections')
 
         self._synchronizer = message_filters.ApproximateTimeSynchronizer(
             (self._image_sub, self._detections_sub), 5, 0.01)
@@ -57,16 +57,26 @@ class DetectionVisualizerNode(Node):
             max_class = None
             max_score = 0.0
             for result in detection.results:
-                hypothesis = result.hypothesis
-                if hypothesis.score > max_score:
-                    max_score = hypothesis.score
-                    max_class = hypothesis.class_id
+                if hasattr(result, 'hypothesis'): # humble
+                    hypothesis = result.hypothesis
+                    if hypothesis.score > max_score:
+                        max_score = hypothesis.score
+                        max_class = hypothesis.class_id
+                else: # foxy fallback
+                    score = result.score
+                    if score > max_score:
+                        max_score = score
+                        max_class = result.id
             if max_class is None:
                 print("Failed to find class with highest score", file=sys.stderr)
                 return
 
-            cx = detection.bbox.center.position.x
-            cy = detection.bbox.center.position.y
+            if hasattr(detection.bbox.center, 'position'): # humble
+                cx = detection.bbox.center.position.x
+                cy = detection.bbox.center.position.y
+            else: # foxy fallback
+                cx = detection.bbox.center.x
+                cy = detection.bbox.center.y
             sx = detection.bbox.size_x
             sy = detection.bbox.size_y
 
